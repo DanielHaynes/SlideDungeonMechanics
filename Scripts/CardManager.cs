@@ -2,29 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 using DG.Tweening;
 
 public class CardManager : MonoBehaviour {
     const int MAX_GRID_WIDTH = 4;
     const int MAX_GRID_HEIGHT = 4;
-    private float Grid_Spacer_Width = 170.0f;
-    private float Grid_Spacer_Height = 267.0f;
-    private Vector2 startPoint = new Vector2(-340.0f, 175.0f);
+    private float Grid_Spacer_Width = 160.0f;
+    private float Grid_Spacer_Height = 248.0f;
+    private Vector2 startPoint = new Vector2(-240.0f, 280.0f);
 
     private float cardTransitionDelay = 0.25f;
     private float cardTransitionDistance = 550.0f;
 
-    [SerializeField]
-    private Card cardTemplate;
+    [SerializeField]  private Card cardTemplate;
     Card[,] activeCards;
+
+    GameManager currentGameManager;
+    float endGameScoreDelay = 0.35f;
 
     private void Awake() {
         SwipeDetector.OnSwipe += HandlePlayerSwipe;
-        SwipeDetector.OnPreSwipe += HandlePlayerPotentialSwipe;
+        //SwipeDetector.OnPreSwipe += HandlePlayerPotentialSwipe;
 
         KeyboardDetector.OnInput += HandlePlayerInputFromKeyboard;
         activeCards = new Card[MAX_GRID_WIDTH, MAX_GRID_HEIGHT];
+    }
+
+    void OnDestroy() {
+        SwipeDetector.OnSwipe -= HandlePlayerSwipe;
+        KeyboardDetector.OnInput -= HandlePlayerInputFromKeyboard;
+    }
+
+    private void Start() {
+        currentGameManager = GameObject.FindObjectOfType<GameManager>();
+    }
+
+    public Card[,] GetCurrentCards() {
+        return activeCards;
     }
 
     void HandlePlayerInputFromKeyboard(KeyboardDirection direction) {
@@ -48,72 +62,120 @@ public class CardManager : MonoBehaviour {
     }
 
     void AddCardToBoard(SwipeDirection direction) {
-        if (GameManager.instance.IsDeckActive()) {
-            bool set = false;
-            switch (direction) {
-                case SwipeDirection.Up: {
-                        do {
-                            int randIndex = Random.Range(0, MAX_GRID_WIDTH);
-                            if (activeCards[randIndex, MAX_GRID_HEIGHT - 1].IsCardActive() == false) {
-                                set = true;
-                                activeCards[randIndex, MAX_GRID_HEIGHT - 1].SetCardActiveState(true);
-                                activeCards[randIndex, MAX_GRID_HEIGHT - 1].SetCardData(GameManager.instance.GetNextCard());
+        bool set = false;
+        switch (direction) {
+            case SwipeDirection.Up: {
+                    do {
+                        int randIndex = Random.Range(0, MAX_GRID_WIDTH);
+                        if (activeCards[randIndex, MAX_GRID_HEIGHT - 1].IsCardActive() == false) {
+                            set = true;
+                            activeCards[randIndex, MAX_GRID_HEIGHT - 1].SetCardActiveState(true);
+                            activeCards[randIndex, MAX_GRID_HEIGHT - 1].SetCardData(currentGameManager.GetNextCard());
 
-                                Vector2 tempPos = activeCards[randIndex, MAX_GRID_HEIGHT - 1].GetGridLocation();
-                                activeCards[randIndex, MAX_GRID_HEIGHT - 1].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x, tempPos.y - cardTransitionDistance);
-                                activeCards[randIndex, MAX_GRID_HEIGHT - 1].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
-                            }
-                        } while (set == false);
-                        break;
-                    }
-                case SwipeDirection.Right: {
-                        do {
-                            int randIndex = Random.Range(0, MAX_GRID_WIDTH);
-                            if (activeCards[0, randIndex].IsCardActive() == false) {
-                                set = true;
-                                activeCards[0, randIndex].SetCardActiveState(true);
-                                activeCards[0, randIndex].SetCardData(GameManager.instance.GetNextCard());
+                            Vector2 tempPos = activeCards[randIndex, MAX_GRID_HEIGHT - 1].GetGridLocation();
+                            activeCards[randIndex, MAX_GRID_HEIGHT - 1].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x, tempPos.y - cardTransitionDistance);
+                            activeCards[randIndex, MAX_GRID_HEIGHT - 1].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
+                        }
+                    } while (set == false);
+                    //StartCoroutine(Shake(0.05f, 1f, SwipeDirection.Up));
+                    break;
+                }
+            case SwipeDirection.Right: {
+                    do {
+                        int randIndex = Random.Range(0, MAX_GRID_WIDTH);
+                        if (activeCards[0, randIndex].IsCardActive() == false) {
+                            set = true;
+                            activeCards[0, randIndex].SetCardActiveState(true);
+                            activeCards[0, randIndex].SetCardData(currentGameManager.GetNextCard());
 
-                                Vector2 tempPos = activeCards[0, randIndex].GetGridLocation();
-                                activeCards[0, randIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x - cardTransitionDistance, tempPos.y);
-                                activeCards[0, randIndex].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
-                            }
-                        } while (set == false);
-                        break;
-                    }
-                case SwipeDirection.Down: {
-                        do {
-                            int randIndex = Random.Range(0, MAX_GRID_WIDTH);
-                            if (activeCards[randIndex, 0].IsCardActive() == false) {
-                                set = true;
-                                activeCards[randIndex, 0].SetCardActiveState(true);
-                                activeCards[randIndex, 0].SetCardData(GameManager.instance.GetNextCard());
+                            Vector2 tempPos = activeCards[0, randIndex].GetGridLocation();
+                            activeCards[0, randIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x - cardTransitionDistance, tempPos.y);
+                            activeCards[0, randIndex].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
+                        }
+                    } while (set == false);
+                    //StartCoroutine(Shake(0.05f, 1f, SwipeDirection.Right));
+                    break;
+                }
+            case SwipeDirection.Down: {
+                    do {
+                        int randIndex = Random.Range(0, MAX_GRID_WIDTH);
+                        if (activeCards[randIndex, 0].IsCardActive() == false) {
+                            set = true;
+                            activeCards[randIndex, 0].SetCardActiveState(true);
+                            activeCards[randIndex, 0].SetCardData(currentGameManager.GetNextCard());
 
-                                Vector2 tempPos = activeCards[randIndex, 0].GetGridLocation();
-                                activeCards[randIndex, 0].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x, tempPos.y + cardTransitionDistance);
-                                activeCards[randIndex, 0].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
-                            }
-                        } while (set == false);
-                        break;
-                    }
-                case SwipeDirection.Left: {
-                        do {
-                            int randIndex = Random.Range(0, MAX_GRID_HEIGHT);
-                            if (activeCards[MAX_GRID_WIDTH - 1, randIndex].IsCardActive() == false) {
-                                set = true;
-                                activeCards[MAX_GRID_WIDTH - 1, randIndex].SetCardActiveState(true);
-                                activeCards[MAX_GRID_WIDTH - 1, randIndex].SetCardData(GameManager.instance.GetNextCard());
+                            Vector2 tempPos = activeCards[randIndex, 0].GetGridLocation();
+                            activeCards[randIndex, 0].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x, tempPos.y + cardTransitionDistance);
+                            activeCards[randIndex, 0].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
+                        }
+                    } while (set == false);
+                    //StartCoroutine(Shake(0.05f, 1f, SwipeDirection.Down));
+                    break;
+                }
+            case SwipeDirection.Left: {
+                    do {
+                        int randIndex = Random.Range(0, MAX_GRID_HEIGHT);
+                        if (activeCards[MAX_GRID_WIDTH - 1, randIndex].IsCardActive() == false) {
+                            set = true;
+                            activeCards[MAX_GRID_WIDTH - 1, randIndex].SetCardActiveState(true);
+                            activeCards[MAX_GRID_WIDTH - 1, randIndex].SetCardData(currentGameManager.GetNextCard());
 
-                                Vector2 tempPos = activeCards[MAX_GRID_WIDTH - 1, randIndex].GetGridLocation();
-                                activeCards[MAX_GRID_WIDTH - 1, randIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x + cardTransitionDistance, tempPos.y);
-                                activeCards[MAX_GRID_WIDTH - 1, randIndex].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
-                            }
-                        } while (set == false);
-                        break;
-                    }
-            }
-            //GameManager.instance.CreateNextCard();
+                            Vector2 tempPos = activeCards[MAX_GRID_WIDTH - 1, randIndex].GetGridLocation();
+                            activeCards[MAX_GRID_WIDTH - 1, randIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(tempPos.x + cardTransitionDistance, tempPos.y);
+                            activeCards[MAX_GRID_WIDTH - 1, randIndex].GetComponent<RectTransform>().DOAnchorPos(tempPos, cardTransitionDelay);
+                        }
+                    } while (set == false);
+                    //StartCoroutine(Shake(0.05f, 1f, SwipeDirection.Left));
+                    break;
+                }
         }
+    }
+
+    public void GameOverShake() {
+       // StartCoroutine(Shake(0.25f, 10f));
+    }
+
+    IEnumerator Shake (float duration, float magnitude) {
+        Vector3 originalPos = transform.localPosition;
+        float elapsed = 0.0f;
+        while (elapsed < duration) {
+            float x = Random.Range(-1f, 1f) * magnitude;
+            float y = Random.Range(-1f, 1f) * magnitude;
+
+            transform.localPosition = new Vector3(x, y, originalPos.z);
+
+            elapsed += Time.deltaTime;
+
+            yield return null;
+        }
+
+        transform.localPosition = originalPos;
+    }
+
+    public void SpeedUpEndGameScore() {
+        endGameScoreDelay = 0.05f;
+    }
+
+    public void TriggerEndGameScoring() {
+        StartCoroutine(CountCards());
+    }
+
+    IEnumerator CountCards() {
+        foreach(Card card in activeCards) {
+            card.RemoveCardName();
+            if (card.IsCardActive()) {
+                card.DisplayEndGameScore();
+            }
+        }
+
+        foreach(Card card2 in activeCards) {
+            card2.EndGameScoreTextEmphasis();
+            currentGameManager.UpdatePlayerScore(card2.GetEndGameScoreTotal());
+            yield return new WaitForSeconds(endGameScoreDelay);
+        }
+
+        //TODO needs to changed when UI loses scenemanagement.
+        GameObject.FindObjectOfType<UIManager>().EnableHighScore();
     }
 
     void SwapCards(Card cardOne, Card cardTwo) {
@@ -155,31 +217,41 @@ public class CardManager : MonoBehaviour {
     }
 
     void HandlePlayerSwipe(SwipeData data) {
-        switch (data.Direction) {
-            case SwipeDirection.Up:
+        if (currentGameManager.CanPlayerMove()) {
+            switch (data.Direction) {
+                case SwipeDirection.Up:
                 if (HandleUpMovementTest()) {
                     HandleUpMovement();
                     AddCardToBoard(SwipeDirection.Up);
                 }
                 break;
-            case SwipeDirection.Right:
+                case SwipeDirection.Right:
                 if (HandleRightMovementTest()) {
                     HandleRightMovement();
                     AddCardToBoard(SwipeDirection.Right);
                 }
                 break;
-            case SwipeDirection.Down:
+                case SwipeDirection.Down:
                 if (HandleDownMovementTest()) {
                     HandleDownMovement();
                     AddCardToBoard(SwipeDirection.Down);
                 }
                 break;
-            case SwipeDirection.Left:
+                case SwipeDirection.Left:
                 if (HandleLeftMovementTest()) {
                     HandleLeftMovement();
                     AddCardToBoard(SwipeDirection.Left);
                 }
                 break;
+            }
+        }
+    }
+
+    public bool PlayerCanMove() {
+        if (HandleDownMovementTest() || HandleUpMovementTest() || HandleLeftMovementTest() || HandleRightMovementTest()) {
+            return true;
+        }else {
+            return false;
         }
     }
 
@@ -189,22 +261,19 @@ public class CardManager : MonoBehaviour {
                 case CardType.player: {
                     switch (cardTwo.GetCardType()) {
                         case CardType.enemy:
-                            if (cardOne.SurviveDamage(cardTwo.cardValue) == true) {
-                                cardOne.TakeDamage(cardTwo.cardValue);
-                                cardTwo.SetCardActiveState(false);
-                                SwapCards(cardTwo, cardOne);
-                            } else {
-                                cardTwo.SetCardActiveState(false);
-                                SwapCards(cardTwo, cardOne);
-                            }
+                            if (cardOne.SurviveDamage(cardTwo.GetCardValue() / 3) == false) currentGameManager.GameOver("Out of Lives!");
+                            cardOne.TakeDamage(cardTwo.GetCardValue() / 3);
+                            cardTwo.SetCardActiveState(false);
+                            SwapCards(cardTwo, cardOne);
                             break;
                         case CardType.potion:
-                            cardOne.AddValue(cardTwo.cardValue);
+                            cardOne.AddValue(cardTwo.GetCardValue() / 3);
                             cardTwo.SetCardActiveState(false);
                             SwapCards(cardTwo, cardOne);
                             break;
                         case CardType.coin:
-                            GameManager.instance.UpdatePlayerScore(cardTwo.cardValue);
+                            int valueToGive = cardTwo.GetEndGameScoreTotal();
+                            currentGameManager.UpdatePlayerScore(valueToGive);
                             cardTwo.SetCardActiveState(false);
                             SwapCards(cardTwo, cardOne);
                             break;
@@ -214,46 +283,31 @@ public class CardManager : MonoBehaviour {
                 case CardType.enemy: {
                     switch (cardTwo.GetCardType()) {
                         case CardType.player:
-                            if (cardTwo.SurviveDamage(cardOne.cardValue)) {
-                                cardTwo.TakeDamage(cardOne.cardValue);
-                                cardOne.SetCardActiveState(false);
-                            } else {
-                                cardOne.SetCardActiveState(false);
+                            if (cardTwo.SurviveDamage(cardOne.GetCardValue() / 3) == false) currentGameManager.GameOver("Out of Lives!");
+                            cardTwo.TakeDamage(cardOne.GetCardValue() / 3);
+                            cardOne.SetCardActiveState(false);
+                            break;
+                        case CardType.weapon:
+                            if (cardTwo.GetCardValue() >= 3) {
+                                if (cardOne.GetCardValue() == cardTwo.GetCardValue()) {
+                                    cardTwo.SetCardData(CardType.coin, cardOne.GetCardValue());
+                                    cardOne.SetCardActiveState(false);
+                                }
                             }
                             break;
-                    case CardType.shield:
-                            if (cardOne.GetCardValue() > cardTwo.GetCardValue()) {
-                                cardOne.TakeDamage(cardTwo.cardValue);
-                                cardTwo.SetCardActiveState(false);
-                                SwapCards(cardTwo, cardOne);
-                            } else if (cardOne.GetCardValue() < cardTwo.GetCardValue()) {
-                                cardTwo.TakeDamage(cardOne.cardValue);
-                                cardOne.SetCardActiveState(false);
-                            } else {
-                                cardOne.SetCardActiveState(false);
-                                cardTwo.SetCardActiveState(false);
-                            }
+                        case CardType.potion:
+                            cardTwo.SetCardActiveState(false);
+                            SwapCards(cardTwo, cardOne);
                             break;
-                    case CardType.weapon:
-                            if (cardOne.GetCardValue() > cardTwo.GetCardValue()) {
-                                cardOne.TakeDamage(cardTwo.cardValue);
-                                cardTwo.SetCardActiveState(false);
-                                SwapCards(cardTwo, cardOne);
-                            } else if (cardOne.GetCardValue() < cardTwo.GetCardValue()) {
-                                cardTwo.TakeDamage(cardOne.cardValue);
-                                cardOne.SetCardActiveState(false);
-                            } else {
-                                cardOne.SetCardActiveState(false);
-                                cardTwo.SetCardActiveState(false);
-                            }
-                            break;
+
                     }
                     break;
                 }
                 case CardType.coin:{
                     switch (cardTwo.GetCardType()) {
                         case CardType.player:
-                            GameManager.instance.UpdatePlayerScore(cardOne.cardValue);
+                            int valueToGive = cardOne.GetEndGameScoreTotal();
+                            currentGameManager.UpdatePlayerScore(valueToGive);
                             cardOne.SetCardActiveState(false);
                             break;
                     }
@@ -262,48 +316,38 @@ public class CardManager : MonoBehaviour {
                 case CardType.potion:{
                     switch (cardTwo.GetCardType()) {
                         case CardType.player:
-                            cardTwo.AddValue(cardOne.cardValue);
+                            cardTwo.AddValue(cardOne.GetCardValue() / 3);
+                            cardOne.SetCardActiveState(false);
+                            break;
+                        case CardType.enemy:
                             cardOne.SetCardActiveState(false);
                             break;
                     }
                     break;
                 }
-                case CardType.shield:{
-                    switch (cardTwo.GetCardType()) {
-                        case CardType.enemy:
-                            if (cardOne.GetCardValue() > cardTwo.GetCardValue()) {
-                                cardOne.TakeDamage(cardTwo.cardValue);
-                                cardTwo.SetCardActiveState(false);
-                                SwapCards(cardTwo, cardOne);
-                            } else if (cardOne.GetCardValue() < cardTwo.GetCardValue()) {
-                                cardTwo.TakeDamage(cardOne.cardValue);
-                                cardOne.SetCardActiveState(false);
-                            } else {
-                                cardOne.SetCardActiveState(false);
-                                cardTwo.SetCardActiveState(false);
-                            }
-                            break;
-                    }
-                    break;
-                }
                 case CardType.weapon:{
-                    switch (cardTwo.GetCardType()) {
-                        case CardType.enemy:
-                            if (cardOne.GetCardValue() > cardTwo.GetCardValue()) {
-                                cardOne.TakeDamage(cardTwo.cardValue);
-                                cardTwo.SetCardActiveState(false);
-                                SwapCards(cardTwo, cardOne);
-                            }else if (cardOne.GetCardValue() < cardTwo.GetCardValue()) {
-                                cardTwo.TakeDamage(cardOne.cardValue);
-                                cardOne.SetCardActiveState(false);
-                            }else {
-                                cardOne.SetCardActiveState(false);
-                                cardTwo.SetCardActiveState(false);
-                            }
-                            break;
+                    if (cardOne.GetCardValue() >= 3) {
+                        switch (cardTwo.GetCardType()) {
+                            case CardType.enemy:
+                                if (cardOne.GetCardValue() == cardTwo.GetCardValue()) {
+                                    cardTwo.SetCardData(CardType.coin, cardOne.GetCardValue());
+                                    cardOne.SetCardActiveState(false);
+                                }
+                                break;
+                        }
                     }
                     break;
                 }
+            }
+        } else {
+            if (cardOne.GetCardValue() == cardTwo.GetCardValue() && cardOne.GetCardValue() > 2) {
+                cardOne.AddValue(cardTwo.GetCardValue());
+                cardTwo.SetCardActiveState(false);
+                SwapCards(cardTwo, cardOne);
+            } else if (cardOne.GetCardValue() + cardTwo.GetCardValue() == 3) {
+                cardOne.AddValue(cardTwo.GetCardValue());
+                cardTwo.SetCardActiveState(false);
+                SwapCards(cardTwo, cardOne);
             }
         }
     }
@@ -311,42 +355,53 @@ public class CardManager : MonoBehaviour {
     bool HandleCardInterationTest(Card cardOne, Card cardTwo) {
         if (cardOne.GetCardType() != cardTwo.GetCardType()) {
             switch (cardOne.GetCardType()) {
-                case CardType.player: 
+                case CardType.player:
                     switch (cardTwo.GetCardType()) {
-                        case CardType.enemy:    return true;
-                        case CardType.potion:   return true;
-                        case CardType.coin:     return true;
-                        default:                return false;
+                        case CardType.enemy: return true;
+                        case CardType.potion: return true;
+                        case CardType.coin: return true;
+                        default: return false;
                     }
-                case CardType.enemy: 
+                case CardType.enemy:
                     switch (cardTwo.GetCardType()) {
-                        case CardType.player:   return true;
-                        case CardType.shield:   return true;
-                        case CardType.weapon:   return false;
-                        default:                return false;
+                        case CardType.player: return true;
+                        case CardType.weapon: {
+                            if (cardTwo.GetCardValue() == cardOne.GetCardValue()) return true;
+                            return false;
+                        }
+                        case CardType.potion: return true;
+                        default: return false;
                     }
                 case CardType.coin:
                     switch (cardTwo.GetCardType()) {
-                        case CardType.player:   return true;
-                        default:                return false;
+                        case CardType.player: return true;
+                        default: return false;
                     }
                 case CardType.potion:
                     switch (cardTwo.GetCardType()) {
-                        case CardType.player:   return true;
-                        default:                return false;
-                    }
-                case CardType.shield:
-                    switch (cardTwo.GetCardType()) {
-                        case CardType.enemy:    return true;
-                        default:                return false;
+                        case CardType.player: return true;
+                        case CardType.enemy: return true;
+                        default: return false;
                     }
                 case CardType.weapon:
+                    if (cardOne.GetCardValue() >= 3) {
                     switch (cardTwo.GetCardType()) {
-                        case CardType.enemy:    return true;
-                        default:                return false;
+                        case CardType.enemy: 
+                            if (cardOne.GetCardValue() == cardTwo.GetCardValue()) return true;
+                            return false;
+                        default: return false;
+                        }
+                    }else {
+                        return false;
                     }
                 default:
-                    return false;
+                return false;
+            }
+        } else {
+            if (cardOne.GetCardValue() == cardTwo.GetCardValue() && cardOne.GetCardValue() > 2) {
+                return true;
+            } else if (cardOne.GetCardValue() + cardTwo.GetCardValue() == 3) {
+                return true;
             }
         }
         return false;
@@ -504,16 +559,12 @@ public class CardManager : MonoBehaviour {
         do {
             int randomRow = Random.Range(0, MAX_GRID_WIDTH);
             int randomCol = Random.Range(0, MAX_GRID_HEIGHT);
-
-            if (setActive == 0) {
+            
+            if (activeCards[randomRow, randomCol].IsCardActive() == false) {
                 activeCards[randomRow, randomCol].SetCardActiveState(true);
-                activeCards[randomRow, randomCol].SetCardData(CardType.player, 15);
-            } else {
-                if (activeCards[randomRow, randomCol].IsCardActive() == false) {
-                    activeCards[randomRow, randomCol].SetCardActiveState(true);
-                    activeCards[randomRow, randomCol].SetCardData(GameManager.instance.GetNextCard());
-                }
+                activeCards[randomRow, randomCol].SetCardData(currentGameManager.GetNextCard());
             }
+            
             setActive++;
         } while (setActive < numberToStart);
     }

@@ -7,7 +7,6 @@ public enum CardType
     player,
     special,
     weapon,
-    shield,
     enemy,
     coin,
     potion,

@@ -4,41 +4,48 @@ using UnityEngine;
 
 public class Images : MonoBehaviour {
     public Sprite enemyCardImage;
-    public Sprite weaponCardImage;
-    public Sprite shieldCardImage;
+    public Sprite completeBowCardImage;
+    public Sprite bowCardImage;
+    public Sprite quiverCardImage;
     public Sprite coinCardImage;
     public Sprite playerCardImage;
     public Sprite potionCardImage;
-    public Sprite cardBGImage;
-    public Sprite cardBGImagePlayer;
-    public static Images instance = null;
+    public Sprite cardBGImageBlack;
+    public Sprite cardBGImageWhite;
+    public Sprite cardBGImageBeige;
 
-    private void Awake() {
-        if (instance == null)  {
-            instance = this;
-        } else { 
-            Destroy(gameObject);
-        }
-    }
-
-    public Sprite GetCardBackground(CardType type) {
+    public Sprite GetCardBackground(CardType type, int value) {
         if (type == CardType.player) {
-            return cardBGImagePlayer;
+            return cardBGImageBlack;
+        }else if (type == CardType.weapon){
+            if (value ==2) {
+                return cardBGImageWhite; 
+            }else if (value ==1) {
+                return cardBGImageBeige;
+            }else {
+                return cardBGImageBlack;
+            }
         }else {
-            return cardBGImage;
+            return cardBGImageBlack;
         }
     }
 
-    public Sprite GetCardImage(CardType type) {
+    public Sprite GetCardImage(CardType type, int value) {
         switch (type) {
             case CardType.enemy: return enemyCardImage;
-            case CardType.weapon: return weaponCardImage;
-            case CardType.shield: return shieldCardImage;
+            case CardType.weapon: {
+                switch(value) {
+                        case 1: return quiverCardImage;
+                        case 2: return bowCardImage;
+                        case 3: return completeBowCardImage;
+                        default: return completeBowCardImage;
+
+                    }
+            }
             case CardType.coin: return coinCardImage;
             case CardType.player: return playerCardImage;
             case CardType.potion: return potionCardImage;
         }
-        //Debug.Log("WARNING: Missing a cardtype image for " + type);
         return enemyCardImage;
     }
 }

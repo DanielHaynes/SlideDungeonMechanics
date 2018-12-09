@@ -2,86 +2,109 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct PlayerData
-{
-    public int totalHealth;
-    public int maxHealth;
-    public PlayerData(int max, int total) {
-        maxHealth = max;
-        totalHealth = total;
-    }
-}
-
 public class GameManager : MonoBehaviour {
-    public static GameManager instance;
     CardManager levelCardManager;
-    DeckManager levelDeckManager;
+    ProgressManager levelProgressManager;
     UIManager levelUI;
-    bool DeckActive = true;
+    PlayerManager levelPlayerManager;
+    HighScore highScore;
 
-    [Range(1,16)] public int startingCardNumber = 4;
+    [Range(1, 16)] [SerializeField] int startingCardNumber = 4;
 
-    PlayerData currentPlayerData;
-
-    public int playerLevelScore { get; set; }
-
-    public Card nextCard;
+    CardData nextCard;
+    [SerializeField] int playerStartingHealth;
     
+    bool playerCanMove = false;
 
     private void Awake() {
-        if (instance == null) {
-            instance = this;
-        } else {
-            Destroy(gameObject);
-        }
-
+        levelPlayerManager = GameObject.FindObjectOfType<PlayerManager>();
         levelCardManager = GameObject.FindObjectOfType<CardManager>();
-        levelDeckManager = GameObject.FindObjectOfType<DeckManager>();
-
+        levelProgressManager = GameObject.FindObjectOfType<ProgressManager>();
         levelUI = GameObject.FindObjectOfType<UIManager>();
-        currentPlayerData = new PlayerData(15,15);
-    }
+        highScore = GameManager.FindObjectOfType<HighScore>();
 
-    public PlayerData GetCurrentPlayerStatus() {
-        return currentPlayerData;
-    }
-
-    public void UpdatePlayerHealth(int health) {
-        currentPlayerData.totalHealth = health;
-    }
-
-    public void DeckDepleted() {
-        DeckActive = false;
-    }
-
-    public bool IsDeckActive() {
-        return DeckActive;
+        nextCard = new CardData(CardType.player);
     }
 
     private void Start() {
+        //SaveLoad.ClearHighScores();
+        playerCanMove = true;
         levelCardManager.FillGameBoard(startingCardNumber);
         UpdatePlayerScore(0);
-        CreateNextCard();
+        levelPlayerManager.CreatePlayer(playerStartingHealth);
+        levelUI.CreatePlayerHealthBar(levelPlayerManager.GetPlayerHealth());
+    }
+
+    public bool CanPlayerMove() {
+        if (playerCanMove == false) return false;
+        if (levelCardManager.PlayerCanMove()) {
+            return playerCanMove;
+        }else {
+            GameOver("Out of Moves!");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// UpdatePlayerHealth is good for both healing and dealing damage to the player.
+    /// </summary>
+    /// <param name="health"></param>
+    public void IncreasePlayerHealth(int increase) {
+        levelPlayerManager.IncreasePlayerHealth(increase);
+        levelUI.IncreasePlayerHealth(increase, false);
+    }
+
+    public void DecreasePlayerHealth(int decrease) {
+        levelPlayerManager.DecreasePlayerHealth(decrease);
+        levelUI.DecreasePlayerHealth(decrease);
+    }
+
+    public void IncreasePlayerMaxHealth(int health) {
+        if (levelPlayerManager.IncreasePlayerMaxHealth(health)) {
+            levelUI.IncreasePlayerHealth(levelPlayerManager.GetPlayerHealth(), true);
+        }else {
+            IncreasePlayerHealth(health);
+        }
+    }
+
+    public bool CanPlayerSurvive(int damage) {
+        if (levelPlayerManager.GetPlayerHealth() - damage <= 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public void CreateNextCard() {
-        CardData nextCardData = levelDeckManager.GetNextCard();
-        nextCard.SetCardData(nextCardData.cardType, nextCardData.cardValue);
-        levelUI.SetNextCardImage(levelDeckManager.GetNextCardForUI());
+        CardData nextCardData = levelProgressManager.GetNextCard();
+        nextCard = new CardData(nextCardData.cardType, nextCardData.cardValue);
+        levelUI.SetNextCardImage(nextCardData);
     }
 
-    public Card GetNextCard() {
-        Card temp = nextCard;
+    public CardData GetNextCard() {
+        CardData previousCard = new CardData(nextCard.cardType, nextCard.cardValue);
         CreateNextCard();
-        return temp;
+        return previousCard;
     }
 
     public int GetCurrentPlayerScore() {
-        return playerLevelScore;
+        return levelPlayerManager.GetPlayerScore();
     }
 
     public void UpdatePlayerScore(int value) {
-        //levelUI.UpdateScoreText(playerLevelScore += value);
-        playerLevelScore += value;
+        levelUI.SetPlayerScore(levelPlayerManager.UpdatePlayerScore(value));
+    }
+    
+    public void GameOver(string prompt) {
+        playerCanMove = false;
+        levelUI.PresentEndGame(prompt);
+    }
+
+    public void GameOverTrigger() {
+        levelCardManager.TriggerEndGameScoring();
+    }
+
+    public void TriggerHighScore() {
+        highScore.CreateDisplayHighscore(levelPlayerManager.GetPlayerScore());
     }
 }

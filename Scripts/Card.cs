@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+using TMPro;
+using DG.Tweening;
 /// <summary>
 /// CardData is a subclass that can be used to instantiate data. 
 /// Free of MonoBehaviour.
@@ -10,11 +12,12 @@ using UnityEngine.UI;
 public class CardData {
     public int cardValue { get; set; }
     public CardType cardType { get; set; }
-    /// <summary>
-    /// Sets CardData for cards in the deck, which will pass to data to the cards in cardmanager.
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="value"></param>
+    
+    public CardData(CardType type) {
+        cardType = type;
+        cardValue = 0;
+    }
+
     public CardData (CardType type, int value) {
         cardType = type;
         cardValue = value;
@@ -22,19 +25,26 @@ public class CardData {
 }
 
 public class Card : MonoBehaviour {
-    //Card Display
-    [SerializeField] private Image cardBGImage;
-    [SerializeField] private Image cardImage;
-    [SerializeField] private Text cardText;
-    [SerializeField] private Text playerScoreText;
+    [SerializeField] Image cardBGImage;
+    [SerializeField] Image cardImage;
+    [SerializeField] Text cardValueText;
+    [SerializeField] Text endGameScoreText;
+    [SerializeField] Text cardNameText;
+    [SerializeField] CardType cardType;
+    [SerializeField] SpecialType specialType;
+    [SerializeField] int cardValue;
+    [SerializeField] bool isActive = true;
 
-    //Card Data
-    public CardType cardType;
-    public SpecialType specialType;
-    public int cardValue;
-    public bool isActive = true;
-
+    private int endGameScore;
     private Vector2 gridLocation;
+
+    private void Start() {
+        endGameScoreText.text = "";
+    }
+
+    public void TriggerCardEffect() {
+        print(cardType);
+    }
 
     public void SetGridLocation(Vector2 location) {
         gridLocation = location;
@@ -45,55 +55,79 @@ public class Card : MonoBehaviour {
     }
 
     public bool SurviveDamage(int damage) {
-        int tempValue = cardValue - damage;
-        if (tempValue > 0) return true;
-        return false;
+        return GameObject.FindObjectOfType<GameManager>().CanPlayerSurvive(damage);
     }
 
     public void TakeDamage(int damage) {
-        cardValue -= damage;
-        if (cardType == CardType.player) {
-            GameManager.instance.UpdatePlayerHealth(cardValue);
-        }
-        SetCardDisplay();
+        GameObject.FindObjectOfType<GameManager>().DecreasePlayerHealth(damage);
     }
 
     public void AddValue (int value) {
         cardValue += value;
+        cardValueText.text = cardValue.ToString();
         if (cardType == CardType.player) {
-            int tempMax = GameManager.instance.GetCurrentPlayerStatus().maxHealth;
-            if (cardValue > tempMax) cardValue = tempMax;
-            GameManager.instance.UpdatePlayerHealth(cardValue);
+            GameObject.FindObjectOfType<GameManager>().IncreasePlayerHealth(value);
         }
         SetCardDisplay();
+    }
+
+    public void RemoveCardName() {
+        cardNameText.text = "";
     }
 
     public void SetCardDisplay() {
-        //if (cardType == CardType.player) {
-        //    cardText.text = GameManager.instance.GetCurrentPlayerStatus().totalHealth.ToString() + "/" + GameManager.instance.GetCurrentPlayerStatus().maxHealth.ToString();
-        //}else {
-        //    cardText.text = cardValue.ToString();
-        //}
-        cardText.text = cardValue.ToString();
-        playerScoreText.text = GameManager.instance.GetCurrentPlayerScore().ToString();
-        if (cardType == CardType.player) {
-            playerScoreText.enabled = true;
-        }else {
-            playerScoreText.enabled = false;
+        cardImage.rectTransform.sizeDelta = new Vector2(128f, 128f);
+        cardImage.sprite = GameObject.FindObjectOfType<Images>().GetCardImage(cardType, cardValue);
+        cardBGImage.sprite = GameObject.FindObjectOfType<Images>().GetCardBackground(cardType, cardValue);
+        
+        if (cardType != CardType.player) {
+            cardValueText.text = cardValue.ToString();
+        } else {
+            cardValueText.text = "";
         }
-
-        cardImage.sprite = Images.instance.GetCardImage(cardType);
-        cardBGImage.sprite = Images.instance.GetCardBackground(cardType);
+        cardNameText.color = Color.white;
+        cardValueText.color = Color.white;
+        switch (cardType) {
+            case CardType.player:
+                cardNameText.text = "hero";
+                cardNameText.fontSize = 85;
+                cardImage.rectTransform.sizeDelta = new Vector2(256f, 256f);
+            break;
+            case CardType.weapon:
+                cardNameText.text = "sword";
+                cardNameText.fontSize = 75;
+                if (cardValue < 3) {
+                    cardNameText.color = Color.black;
+                    cardValueText.color = Color.black;
+                    if (cardValue == 2) cardNameText.text = "anvil";
+                    if (cardValue == 1) cardNameText.text = "ingot";
+                }
+            break;
+            case CardType.potion:
+                cardNameText.text = "potion";
+                cardNameText.fontSize = 65;
+            break;
+            case CardType.coin:
+                cardNameText.text = "loot";
+                cardNameText.fontSize = 85;
+            break;
+            case CardType.enemy:
+                cardNameText.text = "skull";
+                cardNameText.fontSize = 75;
+            break;
+        }
     }
-
+    
     public void SetCardData(Card data) {
         cardType = data.cardType;
         cardValue = data.cardValue;
+        cardValueText.text = cardValue.ToString();
         SetCardDisplay();
     }
 
-    public void SetCardData(CardType type) {
-        cardType = type;
+    public void SetCardData(CardData data) {
+        cardType = data.cardType;
+        cardValue = data.cardValue;
         SetCardDisplay();
     }
 
@@ -101,6 +135,7 @@ public class Card : MonoBehaviour {
         cardValue = value;
         SetCardDisplay();
     }
+
     public void SetCardData(CardType type, int value) {
         cardType = type;
         cardValue = value;
@@ -127,5 +162,35 @@ public class Card : MonoBehaviour {
 
     public bool IsCardActive() {
         return isActive;
+    }
+
+    public void DisplayEndGameScore() {
+        if (cardValue < 3 || cardType == CardType.player) return;
+        int value = GetEndGameScoreTotal();
+        if (cardType == CardType.enemy) {
+            endGameScoreText.text = "-" + Mathf.Abs(value).ToString();
+        } else {
+            endGameScoreText.text = "+" + value.ToString();
+        }
+        endGameScoreText.enabled = true;
+    }
+
+    public void EndGameScoreTextEmphasis() {
+        if (cardValue < 3 || cardType == CardType.player) return;
+        endGameScoreText.transform.DOScale(new Vector3(1.25f, 1.25f, 1f), 0.2f);
+        if (cardType == CardType.enemy) {
+            endGameScoreText.color = Color.red;
+        } else {
+            endGameScoreText.color = Color.green;
+        }
+    }
+
+    public int GetEndGameScoreTotal() {
+        if (cardValue < 3 || cardType == CardType.player) return 0;
+        if (cardType == CardType.enemy) {
+            return -1 * (int)Mathf.Pow(3, Mathf.Log((cardValue / 3), 2) + 1);
+        } else {
+            return (int)Mathf.Pow(3, Mathf.Log((cardValue / 3), 2) + 1);
+        }
     }
 }
