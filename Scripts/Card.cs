@@ -3,12 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-using TMPro;
 using DG.Tweening;
-/// <summary>
-/// CardData is a subclass that can be used to instantiate data. 
-/// Free of MonoBehaviour.
-/// </summary>
+
 public class CardData {
     public int cardValue { get; set; }
     public CardType cardType { get; set; }
