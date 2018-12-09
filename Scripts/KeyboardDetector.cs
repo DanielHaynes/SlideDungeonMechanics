@@ -20,20 +20,6 @@ public class KeyboardDetector : MonoBehaviour {
             direction = KeyboardDirection.Left;
             SendDirection();
         }
-
-        //if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) {
-        //    direction = KeyboardDirection.Up;
-        //    SendDirection();
-        //} else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) {
-        //    direction = KeyboardDirection.Right;
-        //    SendDirection();
-        //} else if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) {
-        //    direction = KeyboardDirection.Down;
-        //    SendDirection();
-        //} else if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) {
-        //    direction = KeyboardDirection.Left;
-        //    SendDirection();
-        //}
     }
 
     void SendDirection() {
