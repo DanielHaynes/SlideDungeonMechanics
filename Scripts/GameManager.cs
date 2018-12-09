@@ -27,7 +27,6 @@ public class GameManager : MonoBehaviour {
     }
 
     private void Start() {
-        //SaveLoad.ClearHighScores();
         playerCanMove = true;
         levelCardManager.FillGameBoard(startingCardNumber);
         UpdatePlayerScore(0);
@@ -45,10 +44,6 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    /// <summary>
-    /// UpdatePlayerHealth is good for both healing and dealing damage to the player.
-    /// </summary>
-    /// <param name="health"></param>
     public void IncreasePlayerHealth(int increase) {
         levelPlayerManager.IncreasePlayerHealth(increase);
         levelUI.IncreasePlayerHealth(increase, false);
