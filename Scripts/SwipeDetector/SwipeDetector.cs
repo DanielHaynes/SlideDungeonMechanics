@@ -14,14 +14,7 @@ public class SwipeDetector : MonoBehaviour
     [SerializeField]
     private float minDistanceForSwipe = 200f;
 
-    [SerializeField]
-    private float minDistanceForForcast = 100f;
-
     public static event Action<SwipeData> OnSwipe = delegate { };
-    public static event Action<SwipeData> OnPreSwipe = delegate { };
-
-    private bool forcastMet;
-    SwipeDirection forcastDirection;
 
     private void Update() {
         foreach (Touch touch in Input.touches) {
@@ -34,24 +27,6 @@ public class SwipeDetector : MonoBehaviour
 
             if (touch.phase == TouchPhase.Moved) {
                 fingerMovePosition = touch.position;
-
-                //if (Mathf.Abs(fingerDownPosition.y - touch.position.y) > minDistanceForForcast || Mathf.Abs(fingerDownPosition.x - touch.position.x) > minDistanceForForcast) {
-                //    if (forcastMet == false) {
-                //        forcastMet = true;
-                //        if (IsVerticalForcast()) {
-                //            var direction = fingerMovePosition.y - fingerDownPosition.y > 0 ? SwipeDirection.Up : SwipeDirection.Down;
-                //            print("FORCAST: " + direction);
-                //            SendForcast(direction);
-                //            forcastDirection = direction;
-
-                //        } else {
-                //            var direction = fingerMovePosition.x - fingerDownPosition.x > 0 ? SwipeDirection.Right : SwipeDirection.Left;
-                //            SendForcast(direction);
-                //            print("FORCAST: " + direction);
-                //            forcastDirection = direction;
-                //        }
-                //    }
-                //}
 
                 if (!detectSwipeOnlyAfterRelease) {
                     fingerDownPosition = touch.position;
@@ -71,14 +46,10 @@ public class SwipeDetector : MonoBehaviour
         if (SwipeDistanceCheckMet()) {
             if (IsVerticalSwipe()) {
                 var direction = fingerDownPosition.y - fingerUpPosition.y > 0 ? SwipeDirection.Up : SwipeDirection.Down;
-                //if (direction == forcastDirection) {
-                    SendSwipe(direction);
-                //}
+                SendSwipe(direction);
             } else {
                 var direction = fingerDownPosition.x - fingerUpPosition.x > 0 ? SwipeDirection.Right : SwipeDirection.Left;
-                //if (direction == forcastDirection) {
-                    SendSwipe(direction);
-                //}
+                SendSwipe(direction);
             }
             fingerUpPosition = fingerDownPosition;
         }
@@ -91,10 +62,6 @@ public class SwipeDetector : MonoBehaviour
     private bool IsVerticalForcast() {
         return VerticalMovementDistanceForcast() > HorizontalMovementDistanceForcast();
     }
-
-    //private bool ForcastDistanceCheckMet() {
-    //    return Mathf.Abs(fingerDownPosition.y - Touch.position.y)> minDistanceForForcast || HorizontalMovementDistance() > minDistanceForForcast;
-    //}
 
     private bool SwipeDistanceCheckMet() {
         return VerticalMovementDistance() > minDistanceForSwipe || HorizontalMovementDistance() > minDistanceForSwipe;
@@ -114,16 +81,6 @@ public class SwipeDetector : MonoBehaviour
 
     private float HorizontalMovementDistance() {
         return Mathf.Abs(fingerDownPosition.x - fingerUpPosition.x);
-    }
-
-
-    private void SendForcast(SwipeDirection direction) {
-        SwipeData swipeData = new SwipeData() {
-            Direction = direction,
-            StartPosition = fingerDownPosition,
-            EndPosition = fingerUpPosition
-        };
-        OnPreSwipe(swipeData);
     }
 
     private void SendSwipe(SwipeDirection direction) {
